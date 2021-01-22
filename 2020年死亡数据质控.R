@@ -1,17 +1,18 @@
 # 前期准备--------------------------------------
-#setwd("E:/code/CCD104/12月") #依据电脑改变 #leileishouhongbao
-
+setwd("E:/code/CCD104/12月") 
 getwd()
 
 library(readxl)
 library(openxlsx)
 library(lubridate)
-library(data.table)
 library(tidyverse)
+library(stringr)
+
 rm(list=ls()) #清空
 
-#-----2020年12月死亡数据库导入--------------------------------------
-
+# 数据导入--------------------------------------
+#2020年12月死亡数据库导入
+#非沪籍
 ndeath101n12<-read_excel("死亡报告卡一览列表12月101(非沪籍).xls")
 ndeath104n12<-read_excel("死亡报告卡一览列表12月104(非沪籍).xlsx")
 ndeath105n12<-read_excel("死亡报告卡一览表表12月105（非沪籍）.xls")
@@ -66,7 +67,6 @@ cols<-c('死亡证编号','报卡编号','报卡类型编码','报卡类型','�
         '既往活产次数（分娩活产婴儿的例数）','既往死胎例数（分娩死胎的例数）',
         '既往死产例数','既往流产次数','前次妊娠结局','前次妊娠日期','审核区县')
 
-                   
 colnames(ndeath101n12) <- cols
 colnames(ndeath104n12) <- cols
 colnames(ndeath105n12) <- cols
@@ -84,12 +84,12 @@ colnames(ndeath118n12) <- cols
 colnames(ndeath120n12) <- cols
 colnames(ndeath151n12) <- cols
 
-
 totalsepn12<-rbind(ndeath101n12,ndeath104n12,ndeath105n12,ndeath106n12,
-                  ndeath107n12,ndeath109n12,ndeath110n12,ndeath112n12,
-                  ndeath113n12,ndeath114n12,ndeath116n12,ndeath115n12,
-                  ndeath117n12,ndeath118n12,ndeath120n12,ndeath151n12)
+                   ndeath107n12,ndeath109n12,ndeath110n12,ndeath112n12,
+                   ndeath113n12,ndeath114n12,ndeath116n12,ndeath115n12,
+                   ndeath117n12,ndeath118n12,ndeath120n12,ndeath151n12)
 
+# 沪籍
 death101h12<-read_excel("死亡报告卡一览列表12月101(沪籍）.xls",col_types ="text")
 death104h12<-read_excel("死亡报告卡一览列表12月104(沪籍).xlsx",col_types ="text")
 death105h12<-read_excel("死亡报告卡一览表表12月105（沪籍）.xlsx",col_types ="text")
@@ -126,35 +126,37 @@ colnames(death118h12) <- cols
 colnames(death120h12) <- cols
 colnames(death151h12) <- cols
 
-
 totalseph12ne<-rbind(death101h12,death104h12,death105h12,death106h12,
-                   death107h12,death109h12,death110h12,death112h12ne,                  
-                   death113h12,death115h12,death117h12,death118h12,
-                   death151h12,death114h12,death116h12,death120h12)
-totalseph12<-rbind(death101h12,death104h12,death105h12,death106h12,
-                     death107h12,death109h12,death110h12,death112h12,                 
+                     death107h12,death109h12,death110h12,death112h12ne,                  
                      death113h12,death115h12,death117h12,death118h12,
                      death151h12,death114h12,death116h12,death120h12)
+totalseph12<-rbind(death101h12,death104h12,death105h12,death106h12,
+                   death107h12,death109h12,death110h12,death112h12,                 
+                   death113h12,death115h12,death117h12,death118h12,
+                   death151h12,death114h12,death116h12,death120h12)
 
 #write.xlsx(totalseph12ne,"2020年12月沪籍死亡数据(不含儿福院).xlsx")
 #write.xlsx(totalseph12,"2020年12月沪籍死亡数据(含儿福院).xlsx")
 #write.xlsx(totalsepn12,"2020年12月非沪籍死亡数据.xlsx")
 
+# 数据格式统一--------------------------------------------------------
+#totalseph12ne <- read_excel("2020年12月沪籍死亡数据(不含儿福院).xlsx")
+#totalseph12 <- read_excel("2020年12月沪籍死亡数据(含儿福院).xlsx")
+#totalsepn12 <- read_excel("2020年12月非沪籍死亡数据.xlsx")
 
+#日期格式统一
 totalseph12$死亡日期<-lubridate::ymd(totalseph12$死亡日期)
 totalseph12$出生日期<-lubridate::ymd(totalseph12$出生日期)
 totalsepn12$死亡日期<-lubridate::ymd(totalsepn12$死亡日期)
 totalsepn12$出生日期<-lubridate::ymd(totalsepn12$出生日期)
 
+#出生日期为空（可能由于原始日期格式错误导致）
 table(is.na(totalsepn12$出生日期))
-
 
 #totalseph122020<-subset(totalseph12,totalseph12$deathyear=="2020")
 
-
+# 统计各区上交数量
 temp<-ls(pattern = "*death*")
-
-
 Chen<-data.frame()
 Lei<-data.frame()
 for (i in temp){
@@ -167,46 +169,26 @@ Lei
 
 rm(list=ls(pattern="death"))
 
+# 沪籍非沪籍合并
 Totaldeath12<-rbind(totalseph12,totalsepn12)
+
+# 根本死因代码统一大写
 Totaldeath12$根本死因代码<-toupper(Totaldeath12$根本死因代码)
 
+# 保存变量名
 names_death <- names(Totaldeath12)
 names(Totaldeath12) <- paste0('x', 1 : ncol(Totaldeath12))
-####################################################################################################################
-# #-------------其他人要的---------------------------------
-# 
-# library(stringr)
-# death2020_novsuicide3<-Totaldeath12[str_detect(Totaldeath12,"[V|W|X|Y|F]"),]
-# death2020_novsuicide3<-subset(Totaldeath12,grepl("V|W|X|Y|F",Totaldeath12$根本死因代码))
-# 
-# 
-# write.xlsx(death2020_novsuicide3,"2020年1-12月伤害死亡.xlsx")
-# 
-# death_under5<-filter(Totaldeath12,Totaldeath12$agea<5)
-# 
-# names(death_under5)[1:146]<-cols
-# write.xlsx(death_under5,"2020年1-12月5岁以下儿童死亡.xlsx")
-# 
-# totalseph12$deathyear<-lubridate::year(totalseph12$死亡日期)
-# totalseph12$deathmonth<-lubridate::month(totalseph12$死亡日期)
-# 
-# #--------5岁以下儿童死亡---------
-# #death5<-filter(Totaldeath12,Totaldeath12$agea<5)
-# #write.xlsx(death5,"/Volumes/CL 工作硬盘/scdc信息所/各区工作一览表/数据审核质控/2020年1-12月5岁以下儿童死亡.xlsx")
 
-############################################################################################################
-erfu<-Totaldeath12 %>%   filter(grepl("中春路",x44),grepl("9977",x44)) #儿童福利院死亡
-   
+# 儿童福利院死亡
+# x44 户籍地址
+erfu<-Totaldeath12 %>%   filter(grepl("中春路",x44),grepl("9977",x44)) 
 
-addmargins(table(pudy$x6,pudy$agea,useNA = "ifany"))
-################################################################################################################################
-#--------计算年龄---------------
+# 计算年龄（实足年、月、日）
 calage <- function(birth,death){
   i <- lubridate::interval(birth,death)
   p <- lubridate::as.period(i)
   lubridate::year(p)
 }
-
 
 calagem <- function(birth,death){
   i <- lubridate::interval(birth,death)
@@ -221,11 +203,10 @@ calaged <- function(birth,death){
 }
 
 Totaldeath12$agea<-calage(Totaldeath12$x26,Totaldeath12$x27)
+Totaldeath12$agem<-calagem(Totaldeath12$x26,Totaldeath12$x27)
+Totaldeath12$aged<-calaged(Totaldeath12$x26,Totaldeath12$x27)
 
-
-
-
-#--------年龄组---------------
+# 年龄分组
 library(data.table)
 
 agebreaks1 <- c(0,1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,500)
@@ -234,13 +215,12 @@ agelabels1 <- c("0~","1~","5~","10~","15~","20~","25~","30~",
                 "70~","75~","80~","85~")
 
 setDT(Totaldeath12)[,agegroups1 := cut(agea, 
-                                      breaks = agebreaks1, 
-                                      right = FALSE, 
-                                      labels = agelabels1)]
+                                       breaks = agebreaks1, 
+                                       right = FALSE, 
+                                       labels = agelabels1)]
 
-#--------区县重赋值---------------
+# 区县重赋值
 
-#install.packages("car")
 Totaldeath12$审核区县<-car::recode(Totaldeath12$x146,"'黄浦区'=101;
                                                   '徐汇区'=104;
                                                   '长宁区'=105;
@@ -258,77 +238,68 @@ Totaldeath12$审核区县<-car::recode(Totaldeath12$x146,"'黄浦区'=101;
                                                   '奉贤区'=120;
                                                   '崇明区'=151")
 
-
-
-#----------年龄计算是否一致--------------
-# x26出生日期 x27 死亡日期 x28 实足年龄 x29 年龄单位
-Totaldeath_agenot<-Totaldeath12 %>% filter(x29=="岁",agea!=x28)  %>%
-  mutate(wrongre="年龄计算错误") #错误 20条
-rm(Totaldeath_agenot) 
-
-Totaldeath_monthnot<-Totaldeath12 %>% 
-  mutate(agem=calagem(x26,x27))%>% 
-  filter(x28=="月",agem!=x27)
-rm(Totaldeath_monthnot)  
-
-Totaldeath12_daynot<-Totaldeath12 %>% 
-  mutate(aged=calagem(x26,x27))%>% 
-  filter(x28=="天",aged!=x27) 
-rm(Totaldeath12_daynot)  
-
-
-
+# 数据质控--------------------------------------------
 #--------查重---------------------
-class(Totaldeath12$x26)
+# x5姓名 x6性别 x26 出生日期 x27 死亡日期 x120是否沪籍 x146审核区县
 
-library(dplyr)
 Totaldeath12_dup<-Totaldeath12 %>% 
   group_by(x5,x6,x26,x27) %>% 
   mutate(index = n()) %>%
   filter(index > 1) %>%
-  arrange(desc(x4))%>%
+  arrange(desc(x5))%>%
   ungroup() %>%
-  mutate(wrongre="重复数据")
+  mutate(wrongre="重复数据") #重复 6*2=12条
 
+table(Totaldeath12_dup$x120) #查看是否沪籍
+#write.xlsx(Totaldeath12,"/Volumes/CL 工作硬盘/scdc信息所/各区工作一览表/2020死亡报卡一览表/每月上交数据/12月/2020年1-12月所有死亡.xlsx")
+#names(Totaldeath12_dup)[1:146]<-cols
+#write.xlsx(Totaldeath12_dup,"/Volumes/CL 工作硬盘/scdc信息所/各区工作一览表/2020死亡报卡一览表/每月上交数据/12月/2020年截止12月数据库重复.xlsx")
 
-table(Totaldeath12_dup$x120)
-write.xlsx(Totaldeath12,"/Volumes/CL 工作硬盘/scdc信息所/各区工作一览表/2020死亡报卡一览表/每月上交数据/12月/2020年1-12月所有死亡.xlsx")
-names(Totaldeath12_dup)[1:146]<-cols
-write.xlsx(Totaldeath12_dup,"/Volumes/CL 工作硬盘/scdc信息所/各区工作一览表/2020死亡报卡一览表/每月上交数据/12月/2020年截止12月数据库重复.xlsx")
+#----------年龄计算是否一致--------------
+# x26出生日期 x27 死亡日期 x28 实足年龄 x29 年龄单位
+Totaldeath_wrong<-Totaldeath12 %>% filter(x29=="岁",agea!=x28)  %>%
+  mutate(wrongre="年龄计算错误（年）") 
+#错误 20条
 
+Totaldeath_wrong<-Totaldeath12 %>% filter(x29=="月",agem!=x28,)  %>%
+  mutate(wrongre="年龄计算错误（月）") %>% bind_rows(Totaldeath_wrong) 
+#错误 4条
 
+Totaldeath_wrong<-Totaldeath12 %>% filter(x29=="天",aged!=x28) %>%
+  mutate(wrongre="年龄计算错误（天）") %>% bind_rows(Totaldeath_wrong)
+#错误 1条
 
 #--------非婴儿但身份证空值---------
-library(stringr)
-
-Totaldeath_nullid<-filter(Totaldeath12,is.na(Totaldeath12$x12)&Totaldeath12$agea>1) %>%
+# x12身份证号 x5姓名
+# 排除“未知名”“无名”
+# 错误20例
+Totaldeath_wrong<-Totaldeath12 %>% filter(is.na(Totaldeath12$x12)&Totaldeath12$agea>=1) %>%
   filter(!stringr::str_detect(x5,"[名]")) %>%
-  mutate(wrongre="非婴儿但身份证空值")
+  mutate(wrongre="非婴儿但身份证空值") %>% bind_rows(Totaldeath_wrong)
 
-names(Totaldeath_nullid)[1:146]<-cols
-table(Totaldeath_nullid$审核区县)
+#--------年龄>=120岁------------------
+# 错误0例
+Totaldeath_wrong<-Totaldeath12 %>% filter(agea>=120) %>% 
+  mutate(wrongre="非婴儿但身份证空值") %>% bind_rows(Totaldeath_wrong)#年龄>=120岁
 
-#--------业务表单逻辑规则-----
-
-Totaldeath_a1<-filter(Totaldeath12,Totaldeath12$agea>=120)#年龄>=120岁
-
-
-
-
+#--------填报日期早于死亡日期---------
+# x110报告日期 x26出生日期 x27 死亡日期
 Totaldeath12$x110<-lubridate::ymd(Totaldeath12$x110)
 
-Totaldeath_a3<-filter(Totaldeath12,Totaldeath12$x110<Totaldeath12$x26)%>% #填报日期早于死亡日期
+Totaldeath_a3<-filter(Totaldeath12,Totaldeath12$x110<Totaldeath12$x27)%>% #填报日期早于死亡日期
   mutate(wrongre="填报日期早于死亡日期")
 table(Totaldeath_a3$审核区县)
 
+#--------死亡日期早于出生日期---------
 Totaldeath_a4<-filter(Totaldeath12,Totaldeath12$x27<Totaldeath12$x26)#死亡日期早于出生日期
-
 table(Totaldeath_a4$审核区县)
 
 #--------统计分类号有空值----------
+# x124 统计分类号
 Totaldeath_nuCCD<-filter(Totaldeath12,is.na(Totaldeath12$x124)|Totaldeath12$x124=="NULL") %>% 
   mutate(wrongre="统计分类号有空值")
 table(Totaldeath_nuCCD$审核区县)
+
 #--------五岁以下儿童------
 Totaldeath_under5<-filter(Totaldeath12,Totaldeath12$agea<5&Totaldeath12$x125=="否") %>%#年龄5岁以下，“是否五岁以下儿童”填的是否
   mutate(wrongre="年龄5岁以下，'是否五岁以下儿童'填的是否")

@@ -1,4 +1,4 @@
 # Description
 Code for Annual Report
 
-Editet by LeiChen and JiayingQiao
+Edited by LeiChen and JiayingQiao
